@@ -36,6 +36,12 @@ begin
                 else
                     result := (others => '0');
                 end if;
+            when "0100" => -- XOR
+                result := a xor b;
+            when "0110" => -- OR
+                result := a or b;
+            when "0111" => -- AND
+                result := a and b;
             when others =>
                 result := (others => '0'); -- Default case
         end case;

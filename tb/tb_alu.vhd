@@ -66,6 +66,35 @@ begin
       end if;
     end procedure;
 
+    -- Vector overload for logical-operation tests.
+    procedure check_alu(
+      constant a_in, b_in : in std_logic_vector(WIDTH-1 downto 0);
+      constant op_in      : in std_logic_vector(3 downto 0);
+      constant expected   : in std_logic_vector(WIDTH-1 downto 0);
+      constant test_name  : in string
+    ) is
+    begin
+      a  <= a_in;
+      b  <= b_in;
+      op <= op_in;
+
+      wait for 10 ns;
+
+      assert result = expected
+        report "FAIL [" & test_name & "]: result mismatch"
+        severity ERROR;
+
+      if expected = (expected'range => '0') then
+        assert zero = '1'
+          report "FAIL [" & test_name & "]: Zero flag should be '1'"
+          severity ERROR;
+      else
+        assert zero = '0'
+          report "FAIL [" & test_name & "]: Zero flag should be '0'"
+          severity ERROR;
+      end if;
+    end procedure;
+
   begin
     report "--- Starting ALU Unit Tests ---";
 
@@ -75,6 +104,11 @@ begin
 
     -- Test 2: Subtraction
     check_alu(a_in => 20, b_in => 8,  op_in => "1000", expected => 12, test_name => "SUB Basic");
+
+    -- Test 3 : XOR, OR, AND test
+    check_alu(a_in => x"0000000C", b_in => x"0000000A", op_in => "0100", expected => x"00000006", test_name => "XOR Test");
+    check_alu(a_in => x"0000000C", b_in => x"0000000A", op_in => "0110", expected => x"0000000E", test_name => "OR Test");
+    check_alu(a_in => x"0000000C", b_in => x"0000000A", op_in => "0111", expected => x"00000008", test_name => "AND Test");
 
     -- Test 4 : 50 - 50 = 0, test for zero result
     check_alu(a_in => 50, b_in => 50, op_in => "1000", expected => 0, test_name => "SUB Zero Result");

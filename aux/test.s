@@ -19,3 +19,11 @@ addi x3, x3, 15
 sltiu x4, x1, 30
 sltiu x5, x1, 20
 sltiu x6, x1, 25
+addi x1, x0, 7
+addi x2, x0, 12
+andi x3, x1, 4
+andi x4, x2, 8
+ori x5, x3, 4
+ori x6, x1, 10
+xori x7, x2, 20
+xori x8, x1, 15

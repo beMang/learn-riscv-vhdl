@@ -14,7 +14,7 @@ This project is "learning by doing" exploration of hardware description language
 
 ## Instruction Implementation Status
 
-**Progress:** 3 / 40 instructions implemented
+**Progress:** 6 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
@@ -39,9 +39,9 @@ This project is "learning by doing" exploration of hardware description language
 | **Immediate Arithmetic** | `ADDI` | Add immediate | ✅ |
 | **Immediate Comparisons** | `SLTI` | Set less than immediate (signed) | ✅ |
 | | `SLTIU` | Set less than immediate (unsigned) | ✅ |
-| **Immediate Logical** | `XORI` | Bitwise XOR immediate | ❌ |
-| | `ORI` | Bitwise OR immediate | ❌ |
-| | `ANDI` | Bitwise AND immediate | ❌ |
+| **Immediate Logical** | `XORI` | Bitwise XOR immediate | ✅ |
+| | `ORI` | Bitwise OR immediate | ✅ |
+| | `ANDI` | Bitwise AND immediate | ✅ |
 | **Immediate Shifts** | `SLLI` | Shift left logical immediate | ❌ |
 | | `SRLI` | Shift right logical immediate | ❌ |
 | | `SRAI` | Shift right arithmetic immediate | ❌ |

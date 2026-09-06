@@ -28,7 +28,7 @@ begin
 			wait until rising_edge(clk);
 		end loop;
 
-		report "Testbench completed after 60 clock cycles" severity note;
+		report "Testbench completed after 60 clock cycles";
 		wait;
 	end process stimulus;
 end architecture simulation;

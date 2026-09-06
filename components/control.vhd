@@ -71,18 +71,21 @@ begin
                     alu_src_a <= '1'; -- register
                     case opcode is
                         when "0010011" => -- OP-IMM
+                            alu_src_b <= "01"; -- immediate
                             case fun3 is
                                 when "000" => -- ADDI
-                                    alu_src_b <= "01"; -- immediate
                                     alu_op <= "0000"; -- add
                                 when "010" => -- SLTI
-                                    alu_src_b <= "01"; -- immediate
                                     alu_op <= "0010"; -- set less than
                                 when "011" => -- SLTIU
-                                    alu_src_b <= "01"; -- immediate
                                     alu_op <= "0011"; -- set less than unsigned
+                                when "100" => -- XORI
+                                    alu_op <= "0100"; -- xor
+                                when "110" => -- ORI
+                                    alu_op <= "0110"; -- or
+                                when "111" => -- ANDI
+                                    alu_op <= "0111"; -- and
                                 when others =>
-                                    alu_src_b <= "01"; -- immediate
                                     alu_op <= "0000"; -- add (default)
                             end case;
                         when others =>
