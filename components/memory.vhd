@@ -22,15 +22,17 @@ architecture rtl of sram is
         variable memory_image : mem_array := (others => x"00000013");
         variable input_line : line;
         variable instruction : std_logic_vector(31 downto 0);
-        variable prefix : string(1 to 2);
         variable address : natural := 0;
     begin
         while not endfile(program_file) and address < memory_image'length loop
             readline(program_file, input_line);
-            read(input_line, prefix);
-            hread(input_line, instruction);
-            memory_image(address) := instruction;
-            address := address + 1;
+            
+            -- Skip empty lines or comment lines starting with '#' or '-'
+            if input_line'length >= 8 and input_line(1) /= '#' and input_line(1) /= '-' then
+                hread(input_line, instruction);
+                memory_image(address) := instruction;
+                address := address + 1;
+            end if;
         end loop;
         return memory_image;
     end function;

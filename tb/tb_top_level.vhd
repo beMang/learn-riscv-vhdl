@@ -24,11 +24,11 @@ begin
 		reset <= '0';
 
 		-- Allow enough time for the ADDI instruction to execute.
-		for cycle in 1 to 60 loop
+		for cycle in 1 to 300 loop
 			wait until rising_edge(clk);
 		end loop;
 
-		report "Testbench completed after 60 clock cycles";
+		report "Testbench completed after 300 clock cycles";
 		wait;
 	end process stimulus;
 end architecture simulation;

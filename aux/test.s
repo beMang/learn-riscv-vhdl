@@ -26,4 +26,12 @@ andi x4, x2, 8
 ori x5, x3, 4
 ori x6, x1, 10
 xori x7, x2, 20
-xori x8, x1, 15
+xori x8, x1, 15 # Register state should be : x1=7, x2=12, x3=4, x4=8, x5=4, x6=15, x7=24, x8=8
+sub x1, x1, x1
+sub x2, x2, x2
+add x1, x1, x3
+addi x2, x2, 5
+add x3, x1, x2
+slt x4, x1, x2
+sltu x5, x1, x2
+addi x1, x0, 5

@@ -14,7 +14,7 @@ This project is "learning by doing" exploration of hardware description language
 
 ## Instruction Implementation Status
 
-**Progress:** 6 / 40 instructions implemented
+**Progress:** 13 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
@@ -45,13 +45,13 @@ This project is "learning by doing" exploration of hardware description language
 | **Immediate Shifts** | `SLLI` | Shift left logical immediate | ❌ |
 | | `SRLI` | Shift right logical immediate | ❌ |
 | | `SRAI` | Shift right arithmetic immediate | ❌ |
-| **Register Arithmetic** | `ADD` | Add registers | ❌ |
-| | `SUB` | Subtract registers | ❌ |
-| **Register Comparisons** | `SLT` | Set less than (signed) | ❌ |
-| | `SLTU` | Set less than (unsigned) | ❌ |
-| **Register Logical** | `XOR` | Bitwise XOR | ❌ |
-| | `OR` | Bitwise OR | ❌ |
-| | `AND` | Bitwise AND | ❌ |
+| **Register Arithmetic** | `ADD` | Add registers | ✅ |
+| | `SUB` | Subtract registers | ✅ |
+| **Register Comparisons** | `SLT` | Set less than (signed) | ✅ |
+| | `SLTU` | Set less than (unsigned) | ✅ |
+| **Register Logical** | `XOR` | Bitwise XOR | ✅ |
+| | `OR` | Bitwise OR | ✅ |
+| | `AND` | Bitwise AND | ✅ |
 | **Register Shifts** | `SLL` | Shift left logical | ❌ |
 | | `SRL` | Shift right logical | ❌ |
 | | `SRA` | Shift right arithmetic | ❌ |
@@ -69,11 +69,7 @@ This project is "learning by doing" exploration of hardware description language
 
 ### Run Tests
 ```bash
-# Analyze & Simulate (or make command does the same)
-ghdl -a --std=08 components/*.vhd tb/*.vhd
-ghdl -e --std=08 tb_top_level
-ghdl -r --std=08 tb_top_level --wave=wave.ghw
+make # Use make file to analyze and launch the testbench
 
-# View Waveforms right now the setup file to visualize traces is not provided.
-gtkwave wave.ghw
+gtkwave tmp/tb_top_level.ghw aux/tb_top_level.gtkw # View RTL simulation with wave display already configured
 ```

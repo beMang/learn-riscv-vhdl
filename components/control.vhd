@@ -62,7 +62,7 @@ begin
                     Branch <= '0'; -- no branch
 
                     case opcode is
-                        when "0010011" => -- OP-IMM
+                        when "0110011" | "0010011" => -- OP or OP-IMM
                             state <= S2;
                         when others =>
                             state <= S0; -- default to fetch
@@ -70,6 +70,24 @@ begin
                 when S2 => -- Execute instruction
                     alu_src_a <= '1'; -- register
                     case opcode is
+                        when "0110011" => -- OP
+                            alu_src_b <= "00"; -- register
+                            case fun3 is
+                                when "000" => -- ADD/SUB
+                                    alu_op <= "000" & fun7(5); -- add/sub
+                                when "010" => -- SLT
+                                    alu_op <= "0010"; -- set less than
+                                when "011" => -- SLTU
+                                    alu_op <= "0011"; -- set less than unsigned
+                                when "100" => -- XOR
+                                    alu_op <= "0100"; -- xor
+                                when "110" => -- OR
+                                    alu_op <= "0110"; -- or
+                                when "111" => -- AND
+                                    alu_op <= "0111"; -- and
+                                when others =>
+                                    alu_op <= "0000"; -- add (default)
+                            end case;
                         when "0010011" => -- OP-IMM
                             alu_src_b <= "01"; -- immediate
                             case fun3 is
