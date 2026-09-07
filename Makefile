@@ -15,6 +15,8 @@ TB_FILE = $(TB_DIR)/$(TB).vhd
 WAVE_FILE = $(TMP_DIR)/$(TB).ghw
 WAVE_CFG  = $(AUX_DIR)/$(TB).gtkw
 
+PROGRAM ?= test.s
+
 .PHONY: all compile elaborate run view clean
 
 all: view
@@ -23,7 +25,7 @@ compile:
 	mkdir -p $(TMP_DIR)
 	$(GHDL) -a $(STD) --workdir=$(TMP_DIR) $(DESIGN) $(TB_FILE)
 
-	riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -o $(TMP_DIR)/test.o ./$(AUX_DIR)/test.s
+	riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -o $(TMP_DIR)/test.o ./$(AUX_DIR)/$(PROGRAM)
 	riscv64-unknown-elf-objcopy -O binary $(TMP_DIR)/test.o $(TMP_DIR)/test.bin
 	hexdump -v -e '1/4 "%08x\n"' $(TMP_DIR)/test.bin > $(AUX_DIR)/program.hex
 

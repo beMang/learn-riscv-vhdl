@@ -12,7 +12,8 @@ end entity top_level;
 architecture rtl of top_level is
 
     -- REGISTERS
-    signal pc : std_logic_vector(31 downto 0); -- program counter
+    signal pc : std_logic_vector(31 downto 0) := (others => '0'); -- program counter
+    signal branch_pc : std_logic_vector(31 downto 0) := (others => '0'); -- address of fetched instruction
     signal ir : std_logic_vector(31 downto 0); -- instruction register
     signal data : std_logic_vector(31 downto 0); -- data from memory
     signal alu_out : std_logic_vector(31 downto 0); -- ALU output
@@ -25,6 +26,7 @@ architecture rtl of top_level is
     signal reg_rd2 : std_logic_vector(31 downto 0); -- register file read data 2
     signal reg_wd : std_logic_vector(31 downto 0); -- register file write data
     signal imm32 : std_logic_vector(31 downto 0); -- immediate value extended to 32 bits
+    signal immb : std_logic_vector(31 downto 0); -- immediate value for branch instructions
 
     -- CONTROL SIGNALS
     signal IorD     : std_logic;
@@ -33,8 +35,10 @@ architecture rtl of top_level is
     signal MemtoReg : std_logic;
     signal RegWrite : std_logic;
     signal PCWrite  : std_logic;
-    signal Branch   : std_logic;
     signal PCSrc    : std_logic;
+    signal PCEnable  : std_logic;
+    signal Branch   : std_logic;
+    signal BranchTaken : std_logic;
 
     -- ALU signals
     signal alu_op   : std_logic_vector(3 downto 0);
@@ -43,6 +47,7 @@ architecture rtl of top_level is
     signal alu_a    : std_logic_vector(31 downto 0);
     signal alu_b    : std_logic_vector(31 downto 0);
     signal alu_result: std_logic_vector(31 downto 0);
+    signal zero     : std_logic;
 
     -- Memory Address Mux
     signal mem_addr : std_logic_vector(12 downto 0);
@@ -97,16 +102,52 @@ begin
         );
 
     -- IMMEDIATE GENERATOR (really simple for now, maybe more complex later)
-    imm32 <= (31 downto 12 => ir(31)) & ir(31 downto 20);
+    process(all)
+        variable imm13 : std_logic_vector(12 downto 0);
+    begin
+        imm32 <= (31 downto 12 => ir(31)) & ir(31 downto 20);
+
+        imm13 := ir(31) &          -- Bit 12 (Sign)
+                ir(7)  &          -- Bit 11
+                ir(30 downto 25) & -- Bits 10..5
+                ir(11 downto 8)  & -- Bits 4..1
+                '0';                -- Bit 0 (Always 0)
+        immb <= std_logic_vector(resize(signed(imm13), 32));
+    end process;
+
+    -- Branch logic
+    process(all)
+        variable BranchTakenInternal : std_logic;
+    begin
+        PCEnable <= PCWrite or (Branch and BranchTaken);
+        case ir(14 downto 13) is --fun3
+            when "00" => -- BEQ/BNE
+                BranchTakenInternal :=  zero;
+            when "10" => -- BLT/BGE
+                BranchTakenInternal := not zero;
+            when "11" => -- BLTU/BGEU
+                BranchTakenInternal := not zero;
+            when others =>
+                BranchTakenInternal := '0'; -- not implemented yet TODO
+        end case;
+        if ir(12) = '1' then -- BNE/BGE/BGEU
+            BranchTaken <= not BranchTakenInternal;
+        else
+            BranchTaken <= BranchTakenInternal;
+        end if;
+    end process;
 
     -- ALU MUXes
-    alu_a <= pc when alu_src_a = '0' else A_rd;
+    alu_a <= branch_pc when alu_src_a = '0' and alu_src_b = "11" else
+             pc when alu_src_a = '0' else
+             A_rd;
     process(all)
     begin
         case alu_src_b is
             when "00" => alu_b <= B_rd;
             when "01" => alu_b <= imm32;
             when "10" => alu_b <= x"00000004"; -- 4 for PC increment
+            when "11" => alu_b <= immb;
             when others => alu_b <= (others => '0');
         end case;
     end process;
@@ -118,7 +159,7 @@ begin
             b => alu_b,
             sel => alu_op,
             y => alu_result,
-            zero => open -- not used for now, but will be for branch instructions
+            zero => zero -- not used for now, but will be for branch instructions
         );
 
     -- REGISTER UPDATE
@@ -127,10 +168,15 @@ begin
         if rising_edge(clk) then
             if IRWrite = '1' then
                 ir <= rd_memory;
+                branch_pc <= pc;
             end if;
 
-            if PCWrite = '1' then
-                pc <= alu_out;
+            if PCEnable = '1' then
+                case PCSrc is
+                    when '0' => pc <= alu_result; -- ALU result
+                    when '1' => pc <= alu_out;
+                    when others => pc <= (others => '0');
+                end case;
             end if;
 
             A_rd <= reg_rd1;

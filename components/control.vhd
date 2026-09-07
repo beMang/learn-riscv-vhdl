@@ -28,123 +28,152 @@ entity control_unit is
 end entity control_unit;
 
 architecture rtl of control_unit is
-    type state_type is (S0, S1, S2, S3); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
-    signal state : state_type := S0;
+    type state_type is (S0, S1, S2, S3, SB); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
+    signal current_state, next_state : state_type := S0;
 begin
     process(clk)
     begin
         if rising_edge(clk) then
-            case state is
-                when S0 => -- Fetch instruction
-                    IorD <= '0'; -- PC
-                    alu_src_a <= '0'; -- PC
-                    alu_src_b <= "10"; -- 4
-                    alu_op <= "0000"; -- add
-                    PCSrc <= '0';
-                    IRWrite <= '1'; -- write to instruction register
-                    PCWrite <= '1'; -- write to PC
-
-                    MemWrite <= '0'; -- no write to memory
-                    MemtoReg <= '0'; -- no write to register file
-                    RegWrite <= '0'; -- no write to register file
-                    Branch <= '0'; -- no branch
-                    state <= S1; -- next state is decode
-                when S1 => -- Decode instruction (compute eventual branch address)
-                    alu_src_a <= '0'; -- PC
-                    alu_src_b <= "11"; -- immediate x 4 (see if this is risc-v compliant)
-                    alu_op <= "0000"; -- add
-
-                    IRWrite <= '0'; -- no write to instruction register
-                    PCWrite <= '0'; -- no write to PC
-                    MemWrite <= '0'; -- no write to memory
-                    MemtoReg <= '0'; -- no write to register file
-                    RegWrite <= '0'; -- no write to register file
-                    Branch <= '0'; -- no branch
-
-                    case opcode is
-                        when "0110011" | "0010011" => -- OP or OP-IMM
-                            state <= S2;
-                        when others =>
-                            state <= S0; -- default to fetch
-                    end case;
-                when S2 => -- Execute instruction
-                    alu_src_a <= '1'; -- register
-                    case opcode is
-                        when "0110011" => -- OP
-                            alu_src_b <= "00"; -- register
-                            case fun3 is
-                                when "000" => -- ADD/SUB
-                                    alu_op <= fun7(5) & "000"; -- add/sub
-                                when "010" => -- SLT
-                                    alu_op <= "0010"; -- set less than
-                                when "011" => -- SLTU
-                                    alu_op <= "0011"; -- set less than unsigned
-                                when "100" => -- XOR
-                                    alu_op <= "0100"; -- xor
-                                when "110" => -- OR
-                                    alu_op <= "0110"; -- or
-                                when "111" => -- AND
-                                    alu_op <= "0111"; -- and
-                                when "001" => -- SLL
-                                    alu_op <= "1001"; -- shift left logical
-                                when "101" => -- SRL/SRA
-                                    alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
-                                when others =>
-                                    alu_op <= "0000"; -- add (default)
-                            end case;
-                        when "0010011" => -- OP-IMM
-                            alu_src_b <= "01"; -- immediate
-                            case fun3 is
-                                when "000" => -- ADDI
-                                    alu_op <= "0000"; -- add
-                                when "010" => -- SLTI
-                                    alu_op <= "0010"; -- set less than
-                                when "011" => -- SLTIU
-                                    alu_op <= "0011"; -- set less than unsigned
-                                when "100" => -- XORI
-                                    alu_op <= "0100"; -- xor
-                                when "110" => -- ORI
-                                    alu_op <= "0110"; -- or
-                                when "111" => -- ANDI
-                                    alu_op <= "0111"; -- and
-                                when "001" => -- SLLI
-                                    alu_op <= "1001"; -- shift left logical
-                                when "101" => -- SRLI/SRAI
-                                    alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
-                                when others =>
-                                    alu_op <= "0000"; -- add (default)
-                            end case;
-                        when others =>
-                            alu_src_b <= "00"; -- register (default)
-                            alu_op <= "0000"; -- add (default)
-                    end case;
-
-                    IRWrite <= '0'; -- no write to instruction register
-                    PCWrite <= '0'; -- no write to PC
-                    MemWrite <= '0'; -- no write to memory
-                    MemtoReg <= '0'; -- no write to register file
-                    RegWrite <= '0'; -- no write to register file
-                    Branch <= '0'; -- no branch
-                    state <= S3; -- next state is writeback to register
-                when S3 => -- Writeback to register
-                    MemtoReg <= '0'; -- ALU result
-                    RegWrite <= '1'; -- write to register file
-
-                    IorD <= '0'; -- PC (default)
-                    alu_src_a <= '0'; -- PC (default)
-                    alu_src_b <= "10"; -- 4 (default)
-                    alu_op <= "0000"; -- add (default)
-                    PCSrc <= '0'; -- ALU result (default)
-
-                    IRWrite <= '0'; -- no write to instruction register
-                    PCWrite <= '0'; -- no write to PC
-                    MemWrite <= '0'; -- no write to memory
-                    Branch <= '0'; -- no branch
-
-                    state <= S0; -- next state is fetch
-                when others =>
-                    state <= S0; -- default to fetch
-            end case;
+            current_state <= next_state;
         end if;
+    end process;
+
+    process(all)
+    begin
+        case current_state is
+            when S0 => -- Fetch instruction
+                IorD <= '0'; -- PC
+                alu_src_a <= '0'; -- PC
+                alu_src_b <= "10"; -- 4
+                alu_op <= "0000"; -- add
+                PCSrc <= '0';
+                IRWrite <= '1'; -- write to instruction register
+                PCWrite <= '1'; -- write to PC
+
+                MemWrite <= '0'; -- no write to memory
+                MemtoReg <= '0'; -- no write to register file
+                RegWrite <= '0'; -- no write to register file
+                Branch <= '0'; -- no branch
+                next_state <= S1; -- next state is decode
+            when S1 => -- Decode instruction (compute eventual branch address)
+                alu_src_a <= '0'; -- PC
+                alu_src_b <= "11"; -- immediate branch offset
+                alu_op <= "0000"; -- add
+
+                IRWrite <= '0'; -- no write to instruction register
+                PCWrite <= '0'; -- no write to PC
+                MemWrite <= '0'; -- no write to memory
+                MemtoReg <= '0'; -- no write to register file
+                RegWrite <= '0'; -- no write to register file
+                Branch <= '0'; -- no branch
+
+                case opcode is
+                    when "0110011" | "0010011" => -- OP or OP-IMM
+                        next_state <= S2;
+                    when "1100011" => -- BRANCH
+                        next_state <= SB;
+                    when others =>
+                        next_state <= S0; -- default to fetch
+                end case;
+            when S2 => -- Execute instruction
+                alu_src_a <= '1'; -- register
+                case opcode is
+                    when "0110011" => -- OP
+                        alu_src_b <= "00"; -- register
+                        case fun3 is
+                            when "000" => -- ADD/SUB
+                                alu_op <= fun7(5) & "000"; -- add/sub
+                            when "010" => -- SLT
+                                alu_op <= "0010"; -- set less than
+                            when "011" => -- SLTU
+                                alu_op <= "0011"; -- set less than unsigned
+                            when "100" => -- XOR
+                                alu_op <= "0100"; -- xor
+                            when "110" => -- OR
+                                alu_op <= "0110"; -- or
+                            when "111" => -- AND
+                                alu_op <= "0111"; -- and
+                            when "001" => -- SLL
+                                alu_op <= "1001"; -- shift left logical
+                            when "101" => -- SRL/SRA
+                                alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
+                            when others =>
+                                alu_op <= "0000"; -- add (default)
+                        end case;
+                    when "0010011" => -- OP-IMM
+                        alu_src_b <= "01"; -- immediate
+                        case fun3 is
+                            when "000" => -- ADDI
+                                alu_op <= "0000"; -- add
+                            when "010" => -- SLTI
+                                alu_op <= "0010"; -- set less than
+                            when "011" => -- SLTIU
+                                alu_op <= "0011"; -- set less than unsigned
+                            when "100" => -- XORI
+                                alu_op <= "0100"; -- xor
+                            when "110" => -- ORI
+                                alu_op <= "0110"; -- or
+                            when "111" => -- ANDI
+                                alu_op <= "0111"; -- and
+                            when "001" => -- SLLI
+                                alu_op <= "1001"; -- shift left logical
+                            when "101" => -- SRLI/SRAI
+                                alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
+                            when others =>
+                                alu_op <= "0000"; -- add (default)
+                        end case;
+                    when others =>
+                        alu_src_b <= "00"; -- register (default)
+                        alu_op <= "0000"; -- add (default)
+                end case;
+
+                IRWrite <= '0'; -- no write to instruction register
+                PCWrite <= '0'; -- no write to PC
+                MemWrite <= '0'; -- no write to memory
+                MemtoReg <= '0'; -- no write to register file
+                RegWrite <= '0'; -- no write to register file
+                Branch <= '0'; -- no branch
+                next_state <= S3; -- next state is writeback to register
+            when S3 => -- Writeback to register
+                MemtoReg <= '0'; -- ALU result
+                RegWrite <= '1'; -- write to register file
+
+                IorD <= '0'; -- PC (default)
+                alu_src_a <= '0'; -- PC (default)
+                alu_src_b <= "10"; -- 4 (default)
+                alu_op <= "0000"; -- add (default)
+                PCSrc <= '0'; -- ALU result (default)
+
+                IRWrite <= '0'; -- no write to instruction register
+                PCWrite <= '0'; -- no write to PC
+                MemWrite <= '0'; -- no write to memory
+                Branch <= '0'; -- no branch
+
+                next_state <= S0; -- next state is fetch
+            when SB => -- Branch instruction
+                alu_src_a <= '1'; -- register
+                alu_src_b <= "00"; -- register
+                PCSrc <= '1'; -- ALU out (one register further)
+                Branch <= '1'; -- branch taken
+                case fun3 is
+                    when "000" | "001" =>
+                        alu_op <= "1000"; -- subtract for equality comparison
+                    when "100" | "101" =>
+                        alu_op <= "0010"; -- SLT for signed comparison
+                    when "110" | "111" =>
+                        alu_op <= "0011"; -- SLTU for unsigned comparison
+                    when others =>
+                        alu_op <= "0000"; -- add (default)
+                end case;
+
+                IRWrite <= '0'; -- no write to instruction register
+                PCWrite <= '0'; -- no write to PC
+                MemWrite <= '0'; -- no write to memory
+                MemtoReg <= '0'; -- no write to register file
+                RegWrite <= '0'; -- no write to register file
+                next_state <= S0; -- next state is fetch
+            when others =>
+                next_state <= S0; -- default to fetch
+        end case;
     end process;
 end architecture rtl;

@@ -12,7 +12,7 @@ This project is "learning by doing" exploration of hardware description language
 
 ## Instruction Implementation Status
 
-**Progress:** 19 / 40 instructions implemented
+**Progress:** 25 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
@@ -20,12 +20,12 @@ This project is "learning by doing" exploration of hardware description language
 | | `AUIPC` | Add upper immediate to PC | ❌ |
 | **Jumps** | `JAL` | Jump and link | ❌ |
 | | `JALR` | Jump and link register | ❌ |
-| **Branches** | `BEQ` | Branch if equal | ❌ |
-| | `BNE` | Branch if not equal | ❌ |
-| | `BLT` | Branch if less than (signed) | ❌ |
-| | `BGE` | Branch if greater than or equal (signed) | ❌ |
-| | `BLTU` | Branch if less than (unsigned) | ❌ |
-| | `BGEU` | Branch if greater than or equal (unsigned) | ❌ |
+| **Branches** | `BEQ` | Branch if equal | ✅ |
+| | `BNE` | Branch if not equal | ✅ |
+| | `BLT` | Branch if less than (signed) | ✅ |
+| | `BGE` | Branch if greater than or equal (signed) | ✅ |
+| | `BLTU` | Branch if less than (unsigned) | ✅ |
+| | `BGEU` | Branch if greater than or equal (unsigned) | ✅ |
 | **Loads** | `LB` | Load byte (signed) | ❌ |
 | | `LH` | Load halfword (signed) | ❌ |
 | | `LW` | Load word | ❌ |
