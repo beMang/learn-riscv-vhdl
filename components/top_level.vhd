@@ -25,20 +25,20 @@ architecture rtl of top_level is
     signal reg_rd1 : std_logic_vector(31 downto 0); -- register file read data 1
     signal reg_rd2 : std_logic_vector(31 downto 0); -- register file read data 2
     signal reg_wd : std_logic_vector(31 downto 0); -- register file write data
-    signal imm32 : std_logic_vector(31 downto 0); -- immediate value extended to 32 bits
-    signal immb : std_logic_vector(31 downto 0); -- immediate value for branch instructions
+    signal immediate : std_logic_vector(31 downto 0); -- immediate value from instruction
 
     -- CONTROL SIGNALS
     signal IorD     : std_logic;
     signal MemWrite : std_logic;
     signal IRWrite  : std_logic;
-    signal MemtoReg : std_logic;
+    signal MemtoReg : std_logic_vector(1 downto 0);
     signal RegWrite : std_logic;
     signal PCWrite  : std_logic;
     signal PCSrc    : std_logic;
     signal PCEnable  : std_logic;
     signal Branch   : std_logic;
     signal BranchTaken : std_logic;
+    signal ImmCtrl  : std_logic_vector(1 downto 0);
 
     -- ALU signals
     signal alu_op   : std_logic_vector(3 downto 0);
@@ -68,6 +68,7 @@ begin
             RegWrite => RegWrite,
             PCWrite => PCWrite,
             Branch => Branch,
+            ImmCtrl => ImmCtrl,
             PCSrc => PCSrc,
             alu_op => alu_op,
             alu_src_a => alu_src_a,
@@ -87,7 +88,19 @@ begin
         );
 
     -- REGISTER FILE
-    reg_wd <= data when MemtoReg = '1' else alu_out;
+    process(all)
+    begin
+        case MemtoReg is
+            when "00" => -- ALU result
+                reg_wd <= alu_out;
+            when "01" => -- memory data
+                reg_wd <= data;
+            when "10" => -- PC + 4 (already +4 during fetch)
+                reg_wd <= pc;
+            when others =>
+                reg_wd <= (others => '0');
+        end case;
+    end process;
 
     reg_file : entity work.register_file
         port map (
@@ -104,15 +117,40 @@ begin
     -- IMMEDIATE GENERATOR (really simple for now, maybe more complex later)
     process(all)
         variable imm13 : std_logic_vector(12 downto 0);
+        variable imm21 : std_logic_vector(20 downto 0);
+        variable imm32 : std_logic_vector(31 downto 0);
+        variable immb  : std_logic_vector(31 downto 0);
+        variable immj  : std_logic_vector(31 downto 0);
     begin
-        imm32 <= (31 downto 12 => ir(31)) & ir(31 downto 20);
+        -- I-type immediate (12-bit sign-extended)
+        imm32 := (31 downto 12 => ir(31)) & ir(31 downto 20);
 
+        -- B-type immediate (13-bit sign-extended)
         imm13 := ir(31) &          -- Bit 12 (Sign)
                 ir(7)  &          -- Bit 11
                 ir(30 downto 25) & -- Bits 10..5
                 ir(11 downto 8)  & -- Bits 4..1
-                '0';                -- Bit 0 (Always 0)
-        immb <= std_logic_vector(resize(signed(imm13), 32));
+                '0';              -- Bit 0 (Always 0)
+        immb  := std_logic_vector(resize(signed(imm13), 32));
+
+        -- J-type immediate (21-bit sign-extended)
+        imm21 := ir(31)          & -- Bit 20 (Sign)
+                ir(19 downto 12) & -- Bits 19..12
+                ir(20)          & -- Bit 11
+                ir(30 downto 21) & -- Bits 10..1
+                '0';              -- Bit 0 (Always 0)
+        immj  := std_logic_vector(resize(signed(imm21), 32));
+
+        case ImmCtrl is
+            when "00" => -- I-type
+                immediate <= imm32;
+            when "01" => -- J-type
+                immediate <= immj;
+            when "10" => -- B-type
+                immediate <= immb;
+            when others =>
+                immediate <= (others => '0');
+        end case;
     end process;
 
     -- Branch logic
@@ -137,17 +175,17 @@ begin
         end if;
     end process;
 
-    -- ALU MUXes
-    alu_a <= branch_pc when alu_src_a = '0' and alu_src_b = "11" else
+    -- ALU MUXes (this looks a bit sketchy, TODO : inspect)
+    alu_a <= branch_pc when alu_src_a = '0' and alu_src_b = "01" else
              pc when alu_src_a = '0' else
              A_rd;
+             
     process(all)
     begin
         case alu_src_b is
             when "00" => alu_b <= B_rd;
-            when "01" => alu_b <= imm32;
+            when "01" => alu_b <= immediate;
             when "10" => alu_b <= x"00000004"; -- 4 for PC increment
-            when "11" => alu_b <= immb;
             when others => alu_b <= (others => '0');
         end case;
     end process;

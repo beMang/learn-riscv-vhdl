@@ -14,11 +14,12 @@ entity control_unit is
         IorD : out std_logic; -- 0: PC, 1: ALU result
         MemWrite : out std_logic; -- 1: write to memory
         IRWrite : out std_logic; -- 1: write to instruction register
-        MemtoReg: out std_logic; -- 0: ALU result, 1: memory data
+        MemtoReg: out std_logic_vector(1 downto 0); -- 00: ALU result, 01: memory data, 10: PC + 4
         RegWrite : out std_logic; -- 1: write to register file
         PCWrite : out std_logic; -- 1: write to PC
         Branch : out std_logic; -- 1: branch taken
         PCSrc : out std_logic; -- 0: ALU result, 1: ALU out (one register further)
+        ImmCtrl : out std_logic_vector(1 downto 0); -- 00: I-type, 01: S-type, 10: B-type, 11: U-type
 
         --Alu :
         alu_op : out std_logic_vector(3 downto 0);
@@ -28,7 +29,7 @@ entity control_unit is
 end entity control_unit;
 
 architecture rtl of control_unit is
-    type state_type is (S0, S1, S2, S3, SB); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
+    type state_type is (S0, S1, S2, S3, SB, JAL); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
     signal current_state, next_state : state_type := S0;
 begin
     process(clk)
@@ -51,19 +52,18 @@ begin
                 PCWrite <= '1'; -- write to PC
 
                 MemWrite <= '0'; -- no write to memory
-                MemtoReg <= '0'; -- no write to register file
+                MemtoReg <= "00"; -- no write to register file
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
                 next_state <= S1; -- next state is decode
             when S1 => -- Decode instruction (compute eventual branch address)
                 alu_src_a <= '0'; -- PC
-                alu_src_b <= "11"; -- immediate branch offset
+                alu_src_b <= "01"; -- immediate
                 alu_op <= "0000"; -- add
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
                 MemWrite <= '0'; -- no write to memory
-                MemtoReg <= '0'; -- no write to register file
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
 
@@ -72,6 +72,10 @@ begin
                         next_state <= S2;
                     when "1100011" => -- BRANCH
                         next_state <= SB;
+                        ImmCtrl <= "10"; -- B-type branch
+                    when "1101111" => -- JAL
+                        ImmCtrl <= "01"; -- J-type jump
+                        next_state <= JAL;
                     when others =>
                         next_state <= S0; -- default to fetch
                 end case;
@@ -102,6 +106,7 @@ begin
                         end case;
                     when "0010011" => -- OP-IMM
                         alu_src_b <= "01"; -- immediate
+                        ImmCtrl <= "00"; -- I-type immediate
                         case fun3 is
                             when "000" => -- ADDI
                                 alu_op <= "0000"; -- add
@@ -130,12 +135,11 @@ begin
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
                 MemWrite <= '0'; -- no write to memory
-                MemtoReg <= '0'; -- no write to register file
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
                 next_state <= S3; -- next state is writeback to register
             when S3 => -- Writeback to register
-                MemtoReg <= '0'; -- ALU result
+                MemtoReg <= "00"; -- ALU result
                 RegWrite <= '1'; -- write to register file
 
                 IorD <= '0'; -- PC (default)
@@ -169,8 +173,13 @@ begin
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
                 MemWrite <= '0'; -- no write to memory
-                MemtoReg <= '0'; -- no write to register file
                 RegWrite <= '0'; -- no write to register file
+                next_state <= S0; -- next state is fetch
+            when JAL => -- JAL instruction
+                PCSrc <= '1'; -- AlU out (to take adress computed during decode)
+                PCWrite <= '1'; -- write to PC
+                RegWrite <= '1'; -- write to register file
+                MemtoReg <= "10";
                 next_state <= S0; -- next state is fetch
             when others =>
                 next_state <= S0; -- default to fetch

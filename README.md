@@ -5,20 +5,20 @@ This project is "learning by doing" exploration of hardware description language
 
 ## Features & Architecture
 - **ISA:** RISC-V RV32I (Base Integer Instruction Set)
-- **Architecture:** Multicycle Datapath (Not pipelined for now)
+- **Architecture:** Multicycle Datapath (Not pipelined for now, the control unit is a state machine)
 - **Language:** VHDL-2008
 - **Simulation Toolchain:** GHDL & GTKWave
 - **Target Hardware:** to be determined
 
 ## Instruction Implementation Status
 
-**Progress:** 25 / 40 instructions implemented
+**Progress:** 26 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
 | **Upper Immediate** | `LUI` | Load upper immediate | ❌ |
 | | `AUIPC` | Add upper immediate to PC | ❌ |
-| **Jumps** | `JAL` | Jump and link | ❌ |
+| **Jumps** | `JAL` | Jump and link | ✅ |
 | | `JALR` | Jump and link register | ❌ |
 | **Branches** | `BEQ` | Branch if equal | ✅ |
 | | `BNE` | Branch if not equal | ✅ |
@@ -69,3 +69,5 @@ make # Use make file to analyze and launch the testbench
 
 gtkwave tmp/tb_top_level.ghw aux/tb_top_level.gtkw # View RTL simulation with wave display already configured
 ```
+
+Multiple assembly example program to test instructions are available in ```aux``` and can be launched with ```make PROGRAM=progame_name.s``` and this program will be converted to machine code and loaded into the processor memory and then simulated at RTL level.
