@@ -10,11 +10,9 @@ This project is "learning by doing" exploration of hardware description language
 - **Simulation Toolchain:** GHDL & GTKWave
 - **Target Hardware:** to be determined
 
----
-
 ## Instruction Implementation Status
 
-**Progress:** 13 / 40 instructions implemented
+**Progress:** 19 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
@@ -42,9 +40,9 @@ This project is "learning by doing" exploration of hardware description language
 | **Immediate Logical** | `XORI` | Bitwise XOR immediate | ✅ |
 | | `ORI` | Bitwise OR immediate | ✅ |
 | | `ANDI` | Bitwise AND immediate | ✅ |
-| **Immediate Shifts** | `SLLI` | Shift left logical immediate | ❌ |
-| | `SRLI` | Shift right logical immediate | ❌ |
-| | `SRAI` | Shift right arithmetic immediate | ❌ |
+| **Immediate Shifts** | `SLLI` | Shift left logical immediate | ✅ |
+| | `SRLI` | Shift right logical immediate | ✅ |
+| | `SRAI` | Shift right arithmetic immediate | ✅ |
 | **Register Arithmetic** | `ADD` | Add registers | ✅ |
 | | `SUB` | Subtract registers | ✅ |
 | **Register Comparisons** | `SLT` | Set less than (signed) | ✅ |
@@ -52,14 +50,12 @@ This project is "learning by doing" exploration of hardware description language
 | **Register Logical** | `XOR` | Bitwise XOR | ✅ |
 | | `OR` | Bitwise OR | ✅ |
 | | `AND` | Bitwise AND | ✅ |
-| **Register Shifts** | `SLL` | Shift left logical | ❌ |
-| | `SRL` | Shift right logical | ❌ |
-| | `SRA` | Shift right arithmetic | ❌ |
+| **Register Shifts** | `SLL` | Shift left logical | ✅ |
+| | `SRL` | Shift right logical | ✅ |
+| | `SRA` | Shift right arithmetic | ✅ |
 | **System & Memory** | `FENCE` | Memory fence | ❌ |
 | | `ECALL` | Environment call | ❌ |
 | | `EBREAK` | Environment breakpoint | ❌ |
-
----
 
 ## Running Simulation
 

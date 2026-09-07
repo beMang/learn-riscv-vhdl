@@ -21,9 +21,9 @@ begin
     begin
         case sel is
             when "0000" => -- ADD
-                result := std_logic_vector(unsigned(a) + unsigned(b));
+                result := std_logic_vector(signed(a) + signed(b));
             when "1000" => -- SUB
-                result := std_logic_vector(unsigned(a) - unsigned(b));
+                result := std_logic_vector(signed(a) - signed(b));
             when "0010" => -- SLT
                 if signed(a) < signed(b) then
                     result := (31 downto 1 => '0') & '1';
@@ -42,6 +42,12 @@ begin
                 result := a or b;
             when "0111" => -- AND
                 result := a and b;
+            when "1001" => -- SLL
+                result := std_logic_vector(shift_left(unsigned(a), to_integer(unsigned(b(4 downto 0)))));
+            when "0101" => -- SRL
+                result := std_logic_vector(shift_right(unsigned(a), to_integer(unsigned(b(4 downto 0)))));
+            when "1101" => -- SRA
+                result := std_logic_vector(shift_right(signed(a), to_integer(unsigned(b(4 downto 0)))));
             when others =>
                 result := (others => '0'); -- Default case
         end case;

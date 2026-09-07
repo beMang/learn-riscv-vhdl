@@ -113,6 +113,11 @@ begin
     -- Test 4 : 50 - 50 = 0, test for zero result
     check_alu(a_in => 50, b_in => 50, op_in => "1000", expected => 0, test_name => "SUB Zero Result");
 
+    -- Test 5 : shift operations
+    check_alu(a_in => x"00000001", b_in => x"00000002", op_in => "1001", expected => x"00000004", test_name => "SLL Test");
+    check_alu(a_in => x"00000004", b_in => x"00000002", op_in => "0101", expected => x"00000001", test_name => "SRL Test");
+    check_alu(a_in => x"FFFFFFFC", b_in => x"00000002", op_in => "1101", expected => x"FFFFFFFF", test_name => "SRA Test");
+
     -- End Simulation Gracefully
     report "--- All ALU Unit Tests Completed ---";
     wait; -- Stop process execution

@@ -74,7 +74,7 @@ begin
                             alu_src_b <= "00"; -- register
                             case fun3 is
                                 when "000" => -- ADD/SUB
-                                    alu_op <= "000" & fun7(5); -- add/sub
+                                    alu_op <= fun7(5) & "000"; -- add/sub
                                 when "010" => -- SLT
                                     alu_op <= "0010"; -- set less than
                                 when "011" => -- SLTU
@@ -85,6 +85,10 @@ begin
                                     alu_op <= "0110"; -- or
                                 when "111" => -- AND
                                     alu_op <= "0111"; -- and
+                                when "001" => -- SLL
+                                    alu_op <= "1001"; -- shift left logical
+                                when "101" => -- SRL/SRA
+                                    alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
                                 when others =>
                                     alu_op <= "0000"; -- add (default)
                             end case;
@@ -103,6 +107,10 @@ begin
                                     alu_op <= "0110"; -- or
                                 when "111" => -- ANDI
                                     alu_op <= "0111"; -- and
+                                when "001" => -- SLLI
+                                    alu_op <= "1001"; -- shift left logical
+                                when "101" => -- SRLI/SRAI
+                                    alu_op <= fun7(5) & "101"; -- shift right logical/arithmetic
                                 when others =>
                                     alu_op <= "0000"; -- add (default)
                             end case;
