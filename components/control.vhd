@@ -29,7 +29,7 @@ entity control_unit is
 end entity control_unit;
 
 architecture rtl of control_unit is
-    type state_type is (S0, S1, S2, S3, SB, JAL); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
+    type state_type is (S0, S1, S2, S3, SB, JAL, MemAdr, MWS, MRS, MWB); -- For simple instruction, only fetch, decode, execute and writeback to register is needed (other states will be added for more complex instructions)
     signal current_state, next_state : state_type := S0;
 begin
     process(clk)
@@ -76,6 +76,13 @@ begin
                     when "1101111" => -- JAL
                         ImmCtrl <= "01"; -- J-type jump
                         next_state <= JAL;
+                    when "0100011" | "0000011"=> -- STORE/LOAD
+                        next_state <= MemAdr;
+                        if opcode(5) = '1' then
+                            ImmCtrl <= "11"; -- S-type for STORE
+                        else
+                            ImmCtrl <= "00"; -- I-type for LOAD
+                        end if;
                     when others =>
                         next_state <= S0; -- default to fetch
                 end case;
@@ -180,6 +187,36 @@ begin
                 PCWrite <= '1'; -- write to PC
                 RegWrite <= '1'; -- write to register file
                 MemtoReg <= "10";
+                next_state <= S0; -- next state is fetch
+            when MemAdr => -- Memory address computation for LOAD/STORE
+                alu_src_a <= '1';
+                alu_src_b <= "01"; -- immediate
+                alu_op <= "0000"; -- add
+
+                IRWrite <= '0'; -- no write to instruction register
+                PCWrite <= '0'; -- no write to PC
+                MemWrite <= '0'; -- no write to memory
+                RegWrite <= '0'; -- no write to register file
+
+                if opcode(5) = '1' then -- STORE
+                    next_state <= MWS;
+                else -- LOAD
+                    next_state <= MRS;
+                end if;
+            when MWS => -- Memory write for STORE
+                IorD <= '1';
+                MemWrite <= '1';
+                IRWrite <= '0'; -- no write to instruction register
+                next_state <= S0;
+            when MRS =>
+                IorD <= '1';
+                MemWrite <= '0';
+                IRWrite <= '0'; -- no write to instruction register
+                next_state <= MWB; -- next state is from memory writeback to register
+            when MWB =>
+                MemtoReg <= "01"; -- memory data
+                RegWrite <= '1'; -- write to register file
+                IorD <= '0'; -- PC (default)
                 next_state <= S0; -- next state is fetch
             when others =>
                 next_state <= S0; -- default to fetch

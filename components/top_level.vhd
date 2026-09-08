@@ -83,7 +83,7 @@ begin
             clk => clk,
             we => MemWrite,
             a => mem_addr,
-            wd => alu_b,
+            wd => B_rd,
             rd => rd_memory
         );
 
@@ -121,6 +121,7 @@ begin
         variable imm32 : std_logic_vector(31 downto 0);
         variable immb  : std_logic_vector(31 downto 0);
         variable immj  : std_logic_vector(31 downto 0);
+        variable imms : std_logic_vector(31 downto 0);
     begin
         -- I-type immediate (12-bit sign-extended)
         imm32 := (31 downto 12 => ir(31)) & ir(31 downto 20);
@@ -141,6 +142,9 @@ begin
                 '0';              -- Bit 0 (Always 0)
         immj  := std_logic_vector(resize(signed(imm21), 32));
 
+        -- S-type immediate (12-bit sign-extended)
+        imms := (31 downto 12 => ir(31)) & ir(31 downto 25) & ir(11 downto 7);
+
         case ImmCtrl is
             when "00" => -- I-type
                 immediate <= imm32;
@@ -148,6 +152,8 @@ begin
                 immediate <= immj;
             when "10" => -- B-type
                 immediate <= immb;
+            when "11" => -- S-type
+                immediate <= imms;
             when others =>
                 immediate <= (others => '0');
         end case;

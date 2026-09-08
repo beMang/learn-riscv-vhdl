@@ -12,7 +12,7 @@ This project is "learning by doing" exploration of hardware description language
 
 ## Instruction Implementation Status
 
-**Progress:** 26 / 40 instructions implemented
+**Progress:** 28 / 40 instructions implemented
 
 | Category | Instruction | Description | Implemented |
 | :--- | :--- | :--- | :---: |
@@ -28,12 +28,12 @@ This project is "learning by doing" exploration of hardware description language
 | | `BGEU` | Branch if greater than or equal (unsigned) | ✅ |
 | **Loads** | `LB` | Load byte (signed) | ❌ |
 | | `LH` | Load halfword (signed) | ❌ |
-| | `LW` | Load word | ❌ |
+| | `LW` | Load word | ✅ |
 | | `LBU` | Load byte (unsigned) | ❌ |
 | | `LHU` | Load halfword (unsigned) | ❌ |
 | **Stores** | `SB` | Store byte | ❌ |
 | | `SH` | Store halfword | ❌ |
-| | `SW` | Store word | ❌ |
+| | `SW` | Store word | ✅ |
 | **Immediate Arithmetic** | `ADDI` | Add immediate | ✅ |
 | **Immediate Comparisons** | `SLTI` | Set less than immediate (signed) | ✅ |
 | | `SLTIU` | Set less than immediate (unsigned) | ✅ |
