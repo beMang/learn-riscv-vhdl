@@ -29,7 +29,7 @@ architecture rtl of top_level is
 
     -- CONTROL SIGNALS
     signal IorD     : std_logic;
-    signal MemWrite : std_logic;
+    signal MemWrite : std_logic_vector(3 downto 0);
     signal IRWrite  : std_logic;
     signal MemtoReg : std_logic_vector(1 downto 0);
     signal RegWrite : std_logic;
@@ -39,6 +39,8 @@ architecture rtl of top_level is
     signal Branch   : std_logic;
     signal BranchTaken : std_logic;
     signal ImmCtrl  : std_logic_vector(1 downto 0);
+    signal MemWriteCtrl : std_logic_vector(1 downto 0);
+    signal WriteToMem : std_logic_vector(31 downto 0);
 
     -- ALU signals
     signal alu_op   : std_logic_vector(3 downto 0);
@@ -60,6 +62,7 @@ begin
             opcode => ir(6 downto 0),
             fun3 => ir(14 downto 12),
             fun7 => ir(31 downto 25),
+            adr_lsb => mem_addr(1 downto 0),
 
             IorD => IorD,
             MemWrite => MemWrite,
@@ -69,6 +72,7 @@ begin
             PCWrite => PCWrite,
             Branch => Branch,
             ImmCtrl => ImmCtrl,
+            MemWriteCtrl => MemWriteCtrl,
             PCSrc => PCSrc,
             alu_op => alu_op,
             alu_src_a => alu_src_a,
@@ -83,9 +87,24 @@ begin
             clk => clk,
             we => MemWrite,
             a => mem_addr,
-            wd => B_rd,
+            wd => WriteToMem,
             rd => rd_memory
         );
+
+    -- MEMORY WRITE DATA MUX    
+    process(all)
+    begin
+        case MemWriteCtrl is
+            when "00" => -- word
+                WriteToMem <= B_rd;
+            when "01" => -- halfword
+                WriteToMem <= B_rd(15 downto 0) & B_rd(15 downto 0); --we don't know which halfword will be written
+            when "10" => -- byte
+                WriteToMem <= B_rd(7 downto 0) & B_rd(7 downto 0) & B_rd(7 downto 0) & B_rd(7 downto 0); --we don't know which byte will be written
+            when others =>
+                WriteToMem <= B_rd;
+        end case;
+    end process;
 
     -- REGISTER FILE
     process(all)

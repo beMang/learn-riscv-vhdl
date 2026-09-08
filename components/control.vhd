@@ -9,10 +9,11 @@ entity control_unit is
         opcode : in std_logic_vector(6 downto 0); -- riscv opcode
         fun3 : in std_logic_vector(2 downto 0); -- riscv funct3
         fun7 : in std_logic_vector(6 downto 0); -- riscv funct7
+        adr_lsb : in std_logic_vector(1 downto 0); -- memory address for load/store
 
         -- Outputs to datapath
         IorD : out std_logic; -- 0: PC, 1: ALU result
-        MemWrite : out std_logic; -- 1: write to memory
+        MemWrite : out std_logic_vector(3 downto 0); -- 1: write to memory
         IRWrite : out std_logic; -- 1: write to instruction register
         MemtoReg: out std_logic_vector(1 downto 0); -- 00: ALU result, 01: memory data, 10: PC + 4
         RegWrite : out std_logic; -- 1: write to register file
@@ -20,6 +21,7 @@ entity control_unit is
         Branch : out std_logic; -- 1: branch taken
         PCSrc : out std_logic; -- 0: ALU result, 1: ALU out (one register further)
         ImmCtrl : out std_logic_vector(1 downto 0); -- 00: I-type, 01: S-type, 10: B-type, 11: U-type
+        MemWriteCtrl : out std_logic_vector(1 downto 0); -- 00: word, 01: halfword, 10: byte
 
         --Alu :
         alu_op : out std_logic_vector(3 downto 0);
@@ -51,7 +53,8 @@ begin
                 IRWrite <= '1'; -- write to instruction register
                 PCWrite <= '1'; -- write to PC
 
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
+                MemWriteCtrl <= "00"; -- default to word write
                 MemtoReg <= "00"; -- no write to register file
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
@@ -63,7 +66,7 @@ begin
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
 
@@ -141,7 +144,7 @@ begin
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
                 RegWrite <= '0'; -- no write to register file
                 Branch <= '0'; -- no branch
                 next_state <= S3; -- next state is writeback to register
@@ -157,7 +160,7 @@ begin
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
                 Branch <= '0'; -- no branch
 
                 next_state <= S0; -- next state is fetch
@@ -179,7 +182,7 @@ begin
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
                 RegWrite <= '0'; -- no write to register file
                 next_state <= S0; -- next state is fetch
             when JAL => -- JAL instruction
@@ -195,7 +198,7 @@ begin
 
                 IRWrite <= '0'; -- no write to instruction register
                 PCWrite <= '0'; -- no write to PC
-                MemWrite <= '0'; -- no write to memory
+                MemWrite <= "0000"; -- no write to memory
                 RegWrite <= '0'; -- no write to register file
 
                 if opcode(5) = '1' then -- STORE
@@ -205,12 +208,42 @@ begin
                 end if;
             when MWS => -- Memory write for STORE
                 IorD <= '1';
-                MemWrite <= '1';
+                case fun3 is
+                    when "000" => -- SB
+                        MemWriteCtrl <= "10"; -- store byte
+                        case adr_lsb is
+                            when "00" =>
+                                MemWrite <= "0001"; -- store byte
+                            when "01" =>
+                                MemWrite <= "0010"; -- store byte
+                            when "10" =>
+                                MemWrite <= "0100"; -- store byte
+                            when "11" =>
+                                MemWrite <= "1000"; -- store byte
+                            when others =>
+                                MemWrite <= "0000"; -- no write to memory
+                        end case;
+                    when "001" => --SH
+                        MemWriteCtrl <= "01"; -- store halfword
+                        case adr_lsb is
+                            when "00" =>
+                                MemWrite <= "0011"; -- store halfword
+                            when "10" =>
+                                MemWrite <= "1100"; -- store halfword
+                            when others =>
+                                MemWrite <= "0000"; -- no write to memory
+                        end case;
+                    when "010" => -- SW
+                        MemWriteCtrl <= "00"; -- store word
+                        MemWrite <= "1111"; -- store word
+                    when others =>
+                        MemWrite <= "0000"; -- no write to memory
+                end case;
                 IRWrite <= '0'; -- no write to instruction register
                 next_state <= S0;
             when MRS =>
                 IorD <= '1';
-                MemWrite <= '0';
+                MemWrite <= "0000";
                 IRWrite <= '0'; -- no write to instruction register
                 next_state <= MWB; -- next state is from memory writeback to register
             when MWB =>

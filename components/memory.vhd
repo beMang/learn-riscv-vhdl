@@ -7,7 +7,7 @@ use ieee.std_logic_textio.all;
 entity sram is
     port (
         clk : in std_logic;
-        we : in std_logic;
+        we : in std_logic_vector (3 downto 0); -- Write enable for each byte (4 bytes=>32 bits)
         a : in std_logic_vector(12 downto 0);
         wd : in std_logic_vector(31 downto 0);
         rd : out std_logic_vector(31 downto 0)
@@ -46,8 +46,19 @@ begin
     -- Sync write
     process(clk)
     begin
-        if rising_edge(clk)  and we = '1' then
-            mem(word_address) <= wd;
+        if rising_edge(clk) then
+            if we(0) = '1' then
+                mem(word_address)(7 downto 0) <= wd(7 downto 0);
+            end if;
+            if we(1) = '1' then
+                mem(word_address)(15 downto 8) <= wd(15 downto 8);
+            end if;
+            if we(2) = '1' then
+                mem(word_address)(23 downto 16) <= wd(23 downto 16);
+            end if;
+            if we(3) = '1' then
+                mem(word_address)(31 downto 24) <= wd(31 downto 24);
+            end if;
         end if;
     end process;
 
